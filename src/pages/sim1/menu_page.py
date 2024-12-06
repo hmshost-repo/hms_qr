@@ -4,11 +4,22 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import logging
 from conftest import BASE_URL
+from src.locators.sim1_locators import MenuCategories, CommonLocators
 
 class MenuPage(BasePage):
     def __init__(self, driver):
         super().__init__(driver)
         self.logger = logging.getLogger(__name__)
+
+    def navigate_to_store(self, store_id):
+
+        url = f"{BASE_URL}/{store_id}"
+        self.driver.get(url)
+        try:
+            self.click(CommonLocators.CLOSE_AD_BUTTON)
+            self.click(CommonLocators.CLOSE_POPUP_BUTTON)
+        except:
+            pass
     
     def navigate_to_category(self, category_locator):
         """Navigate to specific category"""
@@ -93,11 +104,3 @@ class MenuPage(BasePage):
             return price == expected_price
         return price != "$86.86"
     
-    def navigate_to_store(self, store_id):
-        """
-        Navigates to a specific store using the store ID
-        Args:
-            store_id: The ID of the store in format XX/XXX
-        """
-        url = f"{BASE_URL}/{store_id}"
-        self.driver.get(url)
