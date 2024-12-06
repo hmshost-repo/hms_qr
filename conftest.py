@@ -6,8 +6,9 @@ from selenium.webdriver.edge.options import Options as EdgeOptions
 from webdriver_manager.chrome import ChromeDriverManager
 from webdriver_manager.firefox import GeckoDriverManager
 from webdriver_manager.microsoft import EdgeChromiumDriverManager
-import logging
-from datetime import datetime
+from selenium.webdriver.chrome.service import Service as ChromeService
+from selenium.webdriver.firefox.service import Service as FirefoxService
+from selenium.webdriver.edge.service import Service as EdgeService
 
 # Configuration
 BASE_URL = "https://qaquickpay.hmshost.com/Menu"
@@ -19,24 +20,23 @@ BROWSER_OPTIONS = {
             "--disable-notifications",
             "--no-sandbox",
             "--disable-dev-shm-usage",
-            # "--headless",
-            "--disable-gpu",
+            # "--headless=new",
+            "--disable-gpu"
         ]
     },
     'firefox': {
-        'default': [
-            "--start-maximized",
-            "--disable-notifications",
-            "--headless",
-            "--disable-gpu",
-            "-no-remote"
-        ]
+        'preferences': {
+            "browser.startup.homepage": "about:blank",
+            "startup.homepage_welcome_url": "about:blank",
+            "browser.download.folderList": 2,
+            "browser.download.manager.showWhenStarting": False
+        }
     },
     'edge': {
         'default': [
             "--start-maximized",
             "--disable-notifications",
-            "--headless",
+            # "--headless=new",
             "--disable-gpu",
             "--no-sandbox"
         ]
@@ -51,31 +51,17 @@ TIMEOUTS = {
 
 def pytest_addoption(parser):
     parser.addoption("--id", action="store", help="store id in format XXX/XXX")
-    parser.addoption("--noreport", action="store_true", help="disable HTML report generation")
-
-@pytest.fixture(scope="session")
-def logger(store_id):
-    """Create logger for test run"""
-    timestamp = datetime.now().strftime('%m%d_%H%M')
-    logger_name = f"store_{store_id}" if store_id else "menu_test"
-    logger = logging.getLogger(logger_name)
-    logger.setLevel(logging.INFO)
-    
-    handler = logging.FileHandler(f"logs/{logger_name}_{timestamp}.log")
-    handler.setFormatter(logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s'))
-    logger.addHandler(handler)
-    
-    return logger
 
 @pytest.fixture(scope="session")
 def store_id(request):
     return request.config.getoption("--id")
 
 @pytest.fixture
-def driver(request, logger):
-    browser = 'chrome'  # default browser
+def driver(request):
+    browser = 'chrome'  # default browser setting
+    driver = None  # Initialize driver to None
     
-    if request.node.get_closest_marker('firefox'):
+    if request.node.get_closest_marker('firefox'):  # This line checks for firefox marker
         browser = 'firefox'
     elif request.node.get_closest_marker('edge'):
         browser = 'edge'
@@ -85,43 +71,41 @@ def driver(request, logger):
             options = ChromeOptions()
             for option in BROWSER_OPTIONS['chrome']['default']:
                 options.add_argument(option)
-            driver = webdriver.Chrome(ChromeDriverManager().install(), options=options)
+            driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
             
         elif browser == 'firefox':
             options = FirefoxOptions()
-            for option in BROWSER_OPTIONS['firefox']['default']:
-                options.add_argument(option)
-            driver = webdriver.Firefox(executable_path=GeckoDriverManager().install(), options=options)
+            for pref, value in BROWSER_OPTIONS['firefox']['preferences'].items():
+                options.set_preference(pref, value)
+            driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
+            driver.maximize_window()
             
         elif browser == 'edge':
             options = EdgeOptions()
             for option in BROWSER_OPTIONS['edge']['default']:
                 options.add_argument(option)
-            driver = webdriver.Edge(EdgeChromiumDriverManager().install(), options=options)
+            driver = webdriver.Edge(service = EdgeService(EdgeChromiumDriverManager().install()), options=options)
         
-        driver.implicitly_wait(TIMEOUTS['implicit'])
-        driver.set_page_load_timeout(TIMEOUTS['page_load'])
-        
-        logger.info(f"Started {browser} browser")
-        yield driver
-        logger.info(f"Closing {browser} browser")
-        driver.quit()
-        
+        if driver:
+            driver.implicitly_wait(TIMEOUTS['implicit'])
+            driver.set_page_load_timeout(TIMEOUTS['page_load'])
+            yield driver
+            driver.quit()
+            
     except Exception as e:
-        logger.error(f"Failed to create {browser} driver: {str(e)}")
+        if driver:
+            driver.quit()
         raise
 
+
 @pytest.fixture
-def sim_type(store_id, logger):
+def sim_type(store_id):
     """Determine simulation type based on store ID"""
     if store_id:
         with open('src/data/sim1_stores.csv') as f:
             if store_id in f.read():
-                logger.info(f"Store {store_id} identified as sim1")
                 return 'sim1'
         with open('src/data/sim2_stores.csv') as f:
             if store_id in f.read():
-                logger.info(f"Store {store_id} identified as sim2")
                 return 'sim2'
-        logger.error(f"Store {store_id} not found in either simulation")
         raise ValueError(f"Store {store_id} not found in either simulation")
