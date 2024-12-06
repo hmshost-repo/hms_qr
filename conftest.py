@@ -59,12 +59,16 @@ def store_id(request):
 @pytest.fixture
 def driver(request):
     browser = 'chrome'  # default browser setting
-    driver = None  # Initialize driver to None
+    driver = None
     
-    if request.node.get_closest_marker('firefox'):  # This line checks for firefox marker
+    # Only change browser if specific marker is present
+    if request.node.get_closest_marker('firefox'):
         browser = 'firefox'
     elif request.node.get_closest_marker('edge'):
         browser = 'edge'
+    elif request.node.get_closest_marker('all_browsers'):
+        # For all_browsers, Chrome will be used by default
+        pass
     
     try:
         if browser == 'chrome':
