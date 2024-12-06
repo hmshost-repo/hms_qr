@@ -1,5 +1,3 @@
-"""Test module for checkout functionality."""
-
 import pytest
 from src.pages.sim1.menu_page import MenuPage
 from src.locators.sim1_locators import (
