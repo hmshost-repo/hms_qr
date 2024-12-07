@@ -1,11 +1,7 @@
 import pytest
 from src.pages.sim1.menu_page import MenuPage
-from src.locators.sim1_locators import MenuCategories, AppetizerItems, PriceLocators
 from src.utils.config_reader import read_store_data
-from selenium.webdriver.support.ui import WebDriverWait
-from selenium.webdriver.support import expected_conditions as EC
-from selenium.common.exceptions import NoSuchElementException
-from selenium.webdriver.common.by import By
+
 
 def get_all_store_ids():
     sim1_stores = read_store_data('src/data/sim1_stores.csv')
