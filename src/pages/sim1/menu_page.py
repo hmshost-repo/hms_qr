@@ -4,7 +4,7 @@ from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import logging
 from conftest import BASE_URL
-from src.locators.sim1_locators import MenuCategories, CommonLocators
+from src.locators.sim1_locators import CommonLocators
 
 class MenuPage(BasePage):
     def __init__(self, driver):
@@ -12,14 +12,31 @@ class MenuPage(BasePage):
         self.logger = logging.getLogger(__name__)
 
     def navigate_to_store(self, store_id):
-
-        url = f"{BASE_URL}/{store_id}"
-        self.driver.get(url)
+        """Navigate to store and handle initial popups"""
+        self.driver.implicitly_wait(0)  # Set to 0 for initial load
+        self.driver.set_page_load_timeout(5)  # Lower page load timeout
+        
         try:
-            self.click(CommonLocators.CLOSE_AD_BUTTON)
-            self.click(CommonLocators.CLOSE_POPUP_BUTTON)
-        except:
-            pass
+            url = f"{BASE_URL}/{store_id}"
+            self.driver.get(url)
+            
+            # Handle popups immediately without any waits
+            try:
+                popup = self.driver.find_element(*CommonLocators.CLOSE_POPUP_BUTTON)
+                if popup.is_displayed():
+                    popup.click()
+            except:
+                pass
+            
+            try:
+                ad = self.driver.find_element(*CommonLocators.CLOSE_AD_BUTTON)
+                if ad.is_displayed():
+                    ad.click()
+            except:
+                pass
+                
+        finally:
+            self.driver.implicitly_wait(1)  # Set back to minimal wait
     
     def navigate_to_category(self, category_locator):
         """Navigate to specific category"""
@@ -45,12 +62,14 @@ class MenuPage(BasePage):
         """Get all prices in current category with error handling"""
         try:
             prices = {}
+            # Find all menu items in the current category
             containers = self.driver.find_elements(*PriceLocators.ITEM_CONTAINER)
             
             if not containers:
                 self.logger.warning("No menu items found in current category")
                 return prices
             
+            # For each menu item, get its name and price
             for container in containers:
                 try:
                     name = container.find_element(*PriceLocators.ITEM_NAME).text

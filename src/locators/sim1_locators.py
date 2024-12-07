@@ -29,6 +29,7 @@ class PriceLocators:
     ITEM_NAME = (By.XPATH, ".//h3")
     ITEM_PRICE = (By.XPATH, ".//p[contains(@class,'palette-neutral100-color typography-text-p2')]")
     CATEGORY_CONTAINER = (By.XPATH, "//div[contains(@class,'category-section')]")
+    INDIVIDUAL_PRICE = (By.CSS_SELECTOR, "p#itemPrice")
 
     
 class CustomizationLocators:

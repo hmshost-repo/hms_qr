@@ -20,8 +20,11 @@ BROWSER_OPTIONS = {
             "--disable-notifications",
             "--no-sandbox",
             "--disable-dev-shm-usage",
-            # "--headless=new",
-            "--disable-gpu"
+            "--disable-gpu",
+            "--disable-dev-shm-usage",
+            "--disable-infobars",
+            "--disable-browser-side-navigation",
+            "--disable-site-isolation-trials"
         ]
     },
     'firefox': {
@@ -44,9 +47,9 @@ BROWSER_OPTIONS = {
 }
 
 TIMEOUTS = {
-    'implicit': 10,
-    'explicit': 10,
-    'page_load': 30
+    'implicit': 1,
+    'explicit': 2,
+    'page_load': 5
 }
 
 def pytest_addoption(parser):
