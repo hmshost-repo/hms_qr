@@ -111,9 +111,9 @@ def driver(request):
 def sim_type(store_id):
     """Determine simulation type based on store ID"""
     if store_id:
-        with open('src/data/sim1_stores.csv') as f:
+        with open('src/data/stores.csv') as f:
             if store_id in f.read():
-                return 'sim1'
+                return 'store'
         with open('src/data/sim2_stores.csv') as f:
             if store_id in f.read():
                 return 'sim2'
