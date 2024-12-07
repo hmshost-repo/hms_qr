@@ -12,6 +12,7 @@ def get_all_store_ids():
     sim2_stores = read_store_data('src/data/sim2_stores.csv')
     return sim1_stores + sim2_stores
 
+
 def escape_quotes(text):
     """Handle special characters in XPath"""
     if "'" in text:
@@ -55,6 +56,7 @@ def test_check_prices_in_categories(driver, store_id):
         
         # Check each item in category
         for item in items:
+            item_name = ""
             try:
                 item_name = item.text
                 print(f"Checking item: {item_name}")
