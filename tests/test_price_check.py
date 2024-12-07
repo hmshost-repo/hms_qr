@@ -7,9 +7,6 @@ def get_all_store_ids():
     stores = read_store_data('src/data/stores.csv')
     return stores
 
-
-
-
 @pytest.mark.price_check
 @pytest.mark.parametrize('store_id', get_all_store_ids())
 def test_check_prices_in_categories(driver, store_id):

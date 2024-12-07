@@ -54,7 +54,13 @@ class OrderControlsLocators:
     ADD_TO_CART = (By.XPATH, "//button[text()='Add to Cart']")
 
 
-
+class ModifierLocators:
+    REQUIRED_SECTION = (By.XPATH, "//span[contains(@class, 'text-danger') and contains(text(), '(Required)')]")
+    RADIO_OPTIONS = (By.CSS_SELECTOR, "i.icons-radio-empty")
+    CHECKBOX_OPTIONS = (By.CSS_SELECTOR, "i.icons-checkbox-empty")
+    ADD_TO_CART = (By.XPATH, "//button[contains(text(), 'Add to Cart')]")
+    CATEGORY_HEADERS = (By.XPATH, "//h1[contains(@class,'category-title') or contains(@class,'title')]")
+    MENU_ITEMS = (By.XPATH, "//h3[contains(@class, 'typography-text-h4')]")
 
 
 

@@ -59,11 +59,12 @@ class BasePage:
             logging.error(f"Failed to interact with element {name if name else locator}: {str(e)}")
             raise
 
-    def get_text(self, locator, name=None):
+    def get_text(self, locator, name=None, element=None):
         """Get text with multiple retry strategies"""
         logging.info(f"Attempting to get text from element: {name if name else locator}")
         try:
-            element = self.wait.until(EC.presence_of_element_located(locator))
+            if element is None:
+                element = self.wait.until(EC.presence_of_element_located(locator))
 
             # Regular text
             try:
@@ -157,3 +158,12 @@ class BasePage:
         except Exception as e:
             logging.error(f"Failed to interact with element {name if name else locator}: {str(e)}")
             raise
+
+    def get_elements(self, locator):
+        """Find all elements by locator"""
+        return self.driver.find_elements(*locator)
+
+    def wait_for_elements(self, locator, timeout=10):
+        """Wait for elements to be present and return them"""
+        wait = WebDriverWait(self.driver, timeout)
+        return wait.until(EC.presence_of_all_elements_located(locator))

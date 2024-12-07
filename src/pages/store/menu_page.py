@@ -1,12 +1,16 @@
-import time
-
+import random
 from src.pages.base_page import BasePage
 from src.locators.store_locators import PriceLocators, MenuCategories
 from selenium.webdriver.common.by import By
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import logging
 from conftest import BASE_URL
-from src.locators.store_locators import CommonLocators
+from src.locators.store_locators import (
+    PriceLocators,
+    MenuCategories,
+    ModifierLocators,
+    CommonLocators
+)
 
 class MenuPage(BasePage):
     def __init__(self, driver):
@@ -51,6 +55,7 @@ class MenuPage(BasePage):
         
         def check_items_in_current_view(category_path=""):
             """Check items in current view, returns True if found items"""
+            global item_name
             items = self.driver.find_elements(*PriceLocators.ITEM_NAME)
             if items:
                 print(f"Found {len(items)} items in {category_path}")
@@ -63,7 +68,7 @@ class MenuPage(BasePage):
                         price = self.get_text(PriceLocators.INDIVIDUAL_PRICE)
                         print(f"Checking {category_path} > {item_name}: {price}")
                         
-                        if price == "86.86":
+                        if price == "2.99":
                             current_path = category_path.replace(" > ", "/")
                             if current_path not in invalid_prices:
                                 invalid_prices[current_path] = {}
@@ -135,3 +140,67 @@ class MenuPage(BasePage):
             self.driver.implicitly_wait(0)
             
         return invalid_prices
+
+    def select_random_item(self):
+        """Select random category and item until reaching an item details page"""
+        try:
+            self.driver.implicitly_wait(2)
+
+            def is_item_details_page():
+                """Check if we're on item details page by looking for Add Item button"""
+                add_buttons = self.driver.find_elements(By.CSS_SELECTOR, "button#AddItem")
+                return len(add_buttons) > 0
+
+            def get_visible_categories():
+                """Get visible categories on current page"""
+                categories = self.get_elements(ModifierLocators.CATEGORY_HEADERS)
+                return [cat for cat in categories if cat.is_displayed()]
+
+            def get_visible_items():
+                """Get visible items on current page"""
+                items = self.get_elements(ModifierLocators.MENU_ITEMS)
+                return [item for item in items if item.is_displayed()]
+
+            def select_from_current_page():
+                """Select either category or item from current page"""
+                # First try to get categories
+                categories = get_visible_categories()
+
+                # Filter drinks at top level
+                if self.driver.current_url.endswith(BASE_URL):
+                    categories = [cat for cat in categories
+                                  if cat.text not in ['Alcoholic Beverages', 'Non-Alcoholic Beverages']]
+
+                # Then try to get items
+                items = get_visible_items()
+
+                # Decide what to click
+                if categories and items:
+                    # If we have both, randomly choose whether to go deeper or select item
+                    clickable = random.choice(categories + items)
+                elif categories:
+                    clickable = random.choice(categories)
+                elif items:
+                    clickable = random.choice(items)
+                else:
+                    return None
+
+                name = clickable.text
+                print(f"Clicking: {name}")
+                clickable.click()
+                return name
+
+            # Keep selecting until we reach item details page
+            while True:
+                if is_item_details_page():
+                    return True
+
+                selected = select_from_current_page()
+                if not selected:
+                    raise Exception("No clickable elements found")
+
+        except Exception as e:
+            print(f"Error selecting random item: {str(e)}")
+            raise
+        finally:
+            self.driver.implicitly_wait(0)
