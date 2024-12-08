@@ -14,6 +14,9 @@ class MenuCategories:
     KIDS = (By.XPATH, "//h1[contains(.,'For The Kids')]")
     SIDES = (By.XPATH, "//h1[contains(.,'Sides')]")
     ALCOHOLIC = (By.XPATH, "//h1[contains(.,'Alcoholic Beverages')]")
+    ALL_CATEGORIES = (By.CSS_SELECTOR, "h1.typography-text-h4")
+    ALL_SUB_CATEGORIES = (By.CSS_SELECTOR, "h3.typography-text-h4")
+    ALTERNATIVE_CATEGORIES = (By.CSS_SELECTOR, "h1.landing-cat-title")
 
 class AppetizerItems:
     BONELESS_BUFFALO_WINGS = (By.XPATH, "//h3[contains(.,'Boneless Buffalo Wings')]")
@@ -51,16 +54,17 @@ class OrderControlsLocators:
     INCREASE_QUANTITY = (By.XPATH, "//button[contains(@class,'increase')]")
     QUANTITY_INPUT = (By.XPATH, "//input[@type='number']")
     TOTAL_PRICE = (By.XPATH, "//div[contains(text(),'Total:')]//span")
-    ADD_TO_CART = (By.XPATH, "//button[text()='Add to Cart']")
+
 
 
 class ModifierLocators:
     REQUIRED_SECTION = (By.XPATH, "//span[contains(@class, 'text-danger') and contains(text(), '(Required)')]")
     RADIO_OPTIONS = (By.CSS_SELECTOR, "i.icons-radio-empty")
     CHECKBOX_OPTIONS = (By.CSS_SELECTOR, "i.icons-checkbox-empty")
-    ADD_TO_CART = (By.XPATH, "//button[contains(text(), 'Add to Cart')]")
+    # ADD_TO_CART = (By.CSS_SELECTOR, "button#AddItem")
     CATEGORY_HEADERS = (By.XPATH, "//h1[contains(@class,'category-title') or contains(@class,'title')]")
     MENU_ITEMS = (By.XPATH, "//h3[contains(@class, 'typography-text-h4')]")
+    ADD_TO_CART = (By.CSS_SELECTOR, 'button.btn-primary, button#AddItem')
 
 
 
