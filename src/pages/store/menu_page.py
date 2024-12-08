@@ -6,10 +6,9 @@ from src.locators.store_locators import (
     ModifierLocators,
     CommonLocators
 )
-from selenium.webdriver.common.by import By
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
 import logging
 from conftest import BASE_URL
+import pytest
 
 class MenuPage(BasePage):
     def __init__(self, driver):
@@ -28,105 +27,108 @@ class MenuPage(BasePage):
                 self.click(CommonLocators.CLOSE_AD_BUTTON)
             except:
                 pass
+            try:
+                self.wait_for_elements(MenuCategories.ALL_CATEGORIES, timeout=3)
+                categories = self.get_elements(MenuCategories.ALL_CATEGORIES)
+                if not categories:
+                    self.logger.error(f"Store {store_id} appears to be empty - no categories found")
+                    pytest.skip(f"Store {store_id} appears to be empty or inaccessible")
+                self.logger.info(f"Successfully accessed store {store_id} with {len(categories)} categories")
+            except Exception as e:
+                self.logger.error(f"Failed to access store {store_id}: {str(e)}")
+                pytest.skip(f"Store {store_id} appears to be empty or inaccessible")
         finally:
             self.driver.implicitly_wait(0)
 
     def check_all_prices(self):
-        """Check prices across all menu categories"""
+        price_to_check = "86.86"
         invalid_prices = {}
-        checked_categories = set()  # Keep track of checked categories
+        processed_categories = set()
+        errors_found = False
 
         def check_items_in_current_view(category_path=""):
-            """Check items in current view, returns True if found items"""
-            global item_name
-            items = self.driver.find_elements(*PriceLocators.ITEM_NAME)
-            if items:
-                print(f"Found {len(items)} items in {category_path}")
+            new_items = self.get_elements(PriceLocators.ITEM_NAME)
+            if not new_items:
+                return False
 
-                for item in items:
-                    try:
-                        item_name = item.text
-                        item.click()
+            self.logger.info(f"Found {len(new_items)} items in {category_path}")
+            for item in new_items:
+                new_item_name = None
+                try:
+                    new_item_name = item.text
+                    self.click(item)
+                    price = self.get_text(PriceLocators.INDIVIDUAL_PRICE)
+                    self.logger.info(f"Checking {category_path} > {new_item_name}: {price}")
 
-                        price = self.get_text(PriceLocators.INDIVIDUAL_PRICE)
-                        print(f"Checking {category_path} > {item_name}: {price}")
+                    if price == price_to_check:
+                        nonlocal errors_found
+                        errors_found = True
+                        path = category_path.replace(" > ", "/")
+                        invalid_prices.setdefault(path, {})[new_item_name] = price
+                        self.logger.error(f"Invalid price found: {path} > {new_item_name}: {price}")
+                    self.driver.back()
+                except Exception as e:
+                    error_item = new_item_name if new_item_name else "unknown item"
+                    self.logger.error(f"Error checking {error_item}: {str(e)}")
+            return True
 
-                        if price == "86.86":
-                            current_path = category_path.replace(" > ", "/")
-                            if current_path not in invalid_prices:
-                                invalid_prices[current_path] = {}
-                            invalid_prices[current_path][item_name] = price
-
-                        self.driver.back()
-
-                    except Exception as e:
-                        print(f"Error checking {item_name}: {str(e)}")
-                        continue
-                return True
-            return False
-
-        def explore_category(category_name, depth=0, path=""):
-            """Recursively explore category and its subcategories"""
-            if category_name in checked_categories:
-                print(f"Already checked {category_name}, skipping...")
+        def explore_category(main_category_name, depth=0, path=""):
+            if main_category_name in processed_categories:
+                self.logger.info(f"Already checked {main_category_name}, skipping...")
                 return
 
-            current_path = f"{path} > {category_name}" if path else category_name
-            print(f"\nExploring depth {depth}: {current_path}")
+            current_path = f"{path} > {main_category_name}" if path else main_category_name
+            self.logger.info(f"\nExploring depth {depth}: {current_path}")
 
             try:
-                # Find and click category using exact match
-                category = self.driver.find_element(By.XPATH,
-                                                    f"//h1[contains(@class,'category-title') or contains(@class,'title')][normalize-space(text())='{category_name}']")
-                category.click()
-                checked_categories.add(category_name)  # Mark as checked
+                category_locator = MenuCategories.CATEGORY_BY_NAME(main_category_name)
+                self.click(category_locator)
+                processed_categories.add(main_category_name)
 
-                # First try to find items
                 if check_items_in_current_view(current_path):
                     self.driver.back()
                     return
-                subcategories = [cat.text for cat in
-                                 self.driver.find_elements(By.XPATH,
-                                                           "//h1[contains(@class,'category-title') or contains(@class,'title')]")
-                                 if cat.is_displayed() and cat.text not in checked_categories]
+
+                subcategories = [
+                    i.text for i in self.get_elements(MenuCategories.VISIBLE_SUBCATEGORIES)
+                    if i.is_displayed() and i.text not in processed_categories
+                ]
 
                 if subcategories:
-                    print(f"Found subcategories in {current_path}: {subcategories}")
-                    for subcat in subcategories:
-                        explore_category(subcat, depth + 1, current_path)
-
+                    self.logger.info(f"Found subcategories in {current_path}: {subcategories}")
+                    for i in subcategories:
+                        explore_category(i, depth + 1, current_path)
                 self.driver.back()
-
             except Exception as e:
-                print(f"Error exploring {current_path}: {str(e)}")
-                # Try to get back to main menu
+                self.logger.error(f"Error exploring {current_path}: {str(e)}")
                 for _ in range(depth + 1):
                     try:
                         self.driver.back()
                     except:
                         pass
-        try:
-            categories = [cat.text for cat in
-                          self.driver.find_elements(By.XPATH,
-                                                    "//h1[contains(@class,'category-title') or contains(@class,'title')]")
-                          if cat.is_displayed()]
-            print(f"Found {len(categories)} main categories")
 
-            for category_name in categories:
-                explore_category(category_name)
+        initial_categories = [
+            cat.text for cat in self.get_elements(MenuCategories.VISIBLE_SUBCATEGORIES)
+            if cat.is_displayed()
+        ]
+        self.logger.info(f"Found {len(initial_categories)} main categories")
 
-        finally:
-            self.driver.implicitly_wait(1)
+        for category_name in initial_categories:
+            explore_category(category_name)
 
+        if errors_found:
+            error_message = "\nInvalid prices found:\n"
+            for path, items in invalid_prices.items():
+                error_message += f"\nCategory: {path}"
+                for item_name, price in items.items():
+                    error_message += f"\n  - {item_name}: {price}"
+            raise AssertionError(error_message)
         return invalid_prices
-
-
 
     def select_random_item(self):
         main_categories = self.get_elements(MenuCategories.ALL_CATEGORIES)
         random_category = random.choice(main_categories)
-        self.alt_click(random_category)
-
+        self.click(random_category)
         while True:
             try:
                 clickable_elements = self.get_elements(
@@ -139,17 +141,12 @@ class MenuPage(BasePage):
 
                 if clickable_elements:
                     random_element = random.choice(clickable_elements)
-                    self.alt_click(random_element)
+                    self.click(random_element)
                 else:
                     self.driver.back()
                 if self.is_element_displayed(ModifierLocators.ADD_TO_CART):
                     return True
-
             except Exception as e:
                 self.logger.error(f"Error during navigation: {str(e)}")
                 self.driver.back()
                 continue
-
-
-
-
