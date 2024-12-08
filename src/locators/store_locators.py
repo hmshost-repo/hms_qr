@@ -61,12 +61,23 @@ class OrderControlsLocators:
 
 
 class ModifierLocators:
+    MODIFIER_HEADER = (By.CSS_SELECTOR, "div.modifier-header")
+    MODIFIER_TEXT = (By.CSS_SELECTOR, "label.typography-text-p3")
     REQUIRED_SECTION = (By.XPATH, "//span[contains(@class, 'text-danger') and contains(text(), '(Required)')]")
     RADIO_OPTIONS = (By.CSS_SELECTOR, "i.icons-radio-empty")
+    RADIO_OPTIONS_CHECKED = (By.CSS_SELECTOR, "i.icons-radio-filled")
     CHECKBOX_OPTIONS = (By.CSS_SELECTOR, "i.icons-checkbox-empty")
+    CHECKBOX_OPTIONS_CHECKED = (By.CSS_SELECTOR, "i.icons-checkbox-filled ")
     CATEGORY_HEADERS = (By.XPATH, "//h1[contains(@class,'category-title') or contains(@class,'title')]")
     MENU_ITEMS = (By.XPATH, "//h3[contains(@class, 'typography-text-h4')]")
     ADD_TO_CART = (By.CSS_SELECTOR, 'button.btn-primary, button#AddItem')
+    COPYRIGHT_LOGO = (By.CSS_SELECTOR, "p.copyright")
+    MODIFIER_REQUIRED = (By.CSS_SELECTOR, "li.item-modifier-required")
+    MODIFIER_OPTIONAL = (By.CSS_SELECTOR, "li.item-modifier-optional")
+    UNIVERSAL = (By.CSS_SELECTOR, "label.typography-text-p3")
+    REQUIRED_MODIFIER_GROUP = (By.CSS_SELECTOR, "ul.required-modifier-group")
+    OPTIONAL_MODIFIER_GROUP = (By.CSS_SELECTOR, "ul.optional-modifier-group")
+
 
 
 

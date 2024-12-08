@@ -91,7 +91,7 @@ class BasePage:
             logging.error(f"Failed to get text from element {name if name else locator}: {str(e)}")
             raise
 
-    def is_element_displayed(self, locator, timeout=None):
+    def is_element_displayed(self, locator, timeout=3):
         try:
             elements = self.driver.find_elements(*locator)
             if elements and elements[0].is_displayed():

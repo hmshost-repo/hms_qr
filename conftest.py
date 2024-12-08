@@ -9,6 +9,9 @@ from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
+from tenacity import retry, stop_after_attempt, wait_fixed, retry_if_exception_type
+from selenium.common.exceptions import TimeoutException, NoSuchWindowException, WebDriverException
+from src.utils.error_handler import handle_test_errors
 
 # Configuration
 BASE_URL = "https://qaquickpay.hmshost.com/Menu"
@@ -54,18 +57,26 @@ TIMEOUTS = {
     'page_load': 3
 }
 
+
+def pytest_configure(config):
+    # Only show these categories of output
+    config.option.tb_style = "short"
+
+
 def pytest_addoption(parser):
     parser.addoption("--id", action="store", help="store id in format XXX/XXX")
+
 
 @pytest.fixture(scope="session")
 def store_id(request):
     return request.config.getoption("--id")
 
+
 @pytest.fixture
 def driver(request):
     browser = 'chrome'  # default browser setting
     driver = None
-    
+
     # Only change browser if specific marker is present
     if request.node.get_closest_marker('firefox'):
         browser = 'firefox'
@@ -74,33 +85,33 @@ def driver(request):
     elif request.node.get_closest_marker('all_browsers'):
         # For all_browsers, Chrome will be used by default
         pass
-    
+
     try:
         if browser == 'chrome':
             options = ChromeOptions()
             for option in BROWSER_OPTIONS['chrome']['default']:
                 options.add_argument(option)
             driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
-            
+
         elif browser == 'firefox':
             options = FirefoxOptions()
             for pref, value in BROWSER_OPTIONS['firefox']['preferences'].items():
                 options.set_preference(pref, value)
             driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
             driver.maximize_window()
-            
+
         elif browser == 'edge':
             options = EdgeOptions()
             for option in BROWSER_OPTIONS['edge']['default']:
                 options.add_argument(option)
-            driver = webdriver.Edge(service = EdgeService(EdgeChromiumDriverManager().install()), options=options)
-        
+            driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install()), options=options)
+
         if driver:
             driver.implicitly_wait(TIMEOUTS['implicit'])
             driver.set_page_load_timeout(TIMEOUTS['page_load'])
             yield driver
             driver.quit()
-            
+
     except Exception as e:
         if driver:
             driver.quit()
@@ -118,3 +129,11 @@ def sim_type(store_id):
             if store_id in f.read():
                 return 'sim2'
         raise ValueError(f"Store {store_id} not found in either simulation")
+
+
+def pytest_collection_modifyitems(items):
+    """Apply error handling wrapper to all test functions"""
+    for item in items:
+        if item.get_closest_marker('skip'):
+            continue
+        item.obj = handle_test_errors(item.obj)
