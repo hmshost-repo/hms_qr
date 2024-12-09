@@ -150,7 +150,7 @@
 #                 self.logger.error(f"Error during navigation: {str(e)}")
 #                 self.driver.back()
 #                 continue
-import time
+import pytest
 
 from conftest import BASE_URL
 from src.pages.base_page import BasePage
@@ -162,7 +162,6 @@ from src.locators.store_locators import (
 )
 import random
 import logging
-import pytest
 
 
 class MenuPage(BasePage):
@@ -198,6 +197,8 @@ class MenuPage(BasePage):
 
 
     def check_all_prices(self):
+        self.click(CommonLocators.CLOSE_POPUP_BUTTON)
+
         price_to_check = "86.86"
         invalid_prices = {}
         processed_categories = set()
@@ -227,9 +228,9 @@ class MenuPage(BasePage):
                     if price == price_to_check:
                         nonlocal errors_found
                         errors_found = True
-                        path = category_path.replace(" > ", "/")
-                        invalid_prices.setdefault(path, {})[new_item_name] = price
-                        self.logger.error(f"Invalid price found: {path} > {new_item_name}: {price}")
+                        dir_path = category_path.replace(" > ", "/")
+                        invalid_prices.setdefault(dir_path, {})[new_item_name] = price
+                        self.logger.error(f"Invalid price found: {dir_path} > {new_item_name}: {price}")
                     self.driver.back()
                 except Exception as e:
                     error_item = new_item_name if new_item_name else "unknown item"
@@ -289,10 +290,14 @@ class MenuPage(BasePage):
         url = f"{BASE_URL}/{store_id}"
         self.driver.get(url)
         try:
-            self.click(CommonLocators.CLOSE_POPUP_BUTTON)
             self.click(CommonLocators.CLOSE_AD_BUTTON)
+            self.click(CommonLocators.CLOSE_POPUP_BUTTON)
+            pass
         except:
             pass
+
+
         if not self.is_element_displayed(ModifierLocators.COPYRIGHT_LOGO, timeout=5):
             self.logger.error(f"Store {store_id} page is not loading properly")
             pytest.skip(f"Store {store_id} is not accessible")
+        self.click(CommonLocators.CLOSE_POPUP_BUTTON)
