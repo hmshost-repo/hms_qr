@@ -181,3 +181,12 @@ class BasePage:
             if elements:
                 return elements
         return []
+
+    def wait_for_element_to_disappear(self, locator, timeout=5):
+        try:
+            WebDriverWait(self.driver, timeout).until_not(
+                EC.presence_of_element_located(locator)
+            )
+            return True
+        except TimeoutException:
+            return False

@@ -18,7 +18,11 @@ def test_random_item_checkout(driver, store_id):
     menu_page.navigate_to_store(store_id)
     menu_page.select_random_item()
     cart_page.handle_modifiers()
+    cart_page.add_to_cart()
+    cart_page.go_to_cart()
+    cart_page.pay_now()
     time.sleep(5)
+
 
 
 
