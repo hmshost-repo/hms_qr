@@ -117,20 +117,6 @@ def driver(request):
             driver.quit()
         raise
 
-
-@pytest.fixture
-def sim_type(store_id):
-    """Determine simulation type based on store ID"""
-    if store_id:
-        with open('src/data/stores.csv') as f:
-            if store_id in f.read():
-                return 'store'
-        with open('src/data/sim2_stores.csv') as f:
-            if store_id in f.read():
-                return 'sim2'
-        raise ValueError(f"Store {store_id} not found in either simulation")
-
-
 def pytest_collection_modifyitems(items):
     """Apply error handling wrapper to all test functions"""
     for item in items:

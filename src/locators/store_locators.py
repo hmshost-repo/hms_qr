@@ -71,6 +71,8 @@ class ModifierLocators:
     CATEGORY_HEADERS = (By.XPATH, "//h1[contains(@class,'category-title') or contains(@class,'title')]")
     MENU_ITEMS = (By.XPATH, "//h3[contains(@class, 'typography-text-h4')]")
     ADD_TO_CART = (By.CSS_SELECTOR, 'button.btn-primary, button#AddItem')
+    CART_BUTTON = (By.CSS_SELECTOR, "i.icons-cart")
+    PAY_NOW_BUTTON = (By.CSS_SELECTOR, "button#PayNow")
     COPYRIGHT_LOGO = (By.CSS_SELECTOR, "p.copyright")
     MODIFIER_REQUIRED = (By.CSS_SELECTOR, "li.item-modifier-required")
     MODIFIER_OPTIONAL = (By.CSS_SELECTOR, "li.item-modifier-optional")
