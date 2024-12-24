@@ -190,3 +190,10 @@ class BasePage:
             return True
         except TimeoutException:
             return False
+
+    def switch_to_frame(self, locator):
+        frame = WebDriverWait(self.driver, 10).until(EC.visibility_of_element_located(locator))
+        self.driver.switch_to.frame(frame)
+
+    def switch_to_default_content(self):
+        self.driver.switch_to.default_content()

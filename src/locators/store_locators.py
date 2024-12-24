@@ -81,6 +81,17 @@ class ModifierLocators:
     OPTIONAL_MODIFIER_GROUP = (By.CSS_SELECTOR, "ul.optional-modifier-group")
 
 
+class PaymentPageLocators:
+    NAME_ON_CARD = (By.CSS_SELECTOR, "input#inputNameOnCard")
+    CARD_NUMBER = (By.CSS_SELECTOR, "input#CardNumber")
+    EXPIRATION_DATE = (By.CSS_SELECTOR, "input#ExpirationDate")
+    SECURITY_CODE = (By.CSS_SELECTOR, "input#SecurityCode")
+    POSTAL_CODE = (By.CSS_SELECTOR, "input#PostalCode")
+    PAY_BUTTON = (By.CSS_SELECTOR, "button#btnPay")
+    FRAME = (By.ID, "hpc--card-frame")
+    SUCCESS_MESSAGE = (By.CSS_SELECTOR, "div.SuccessMsg")
+
+
 
 
 

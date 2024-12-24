@@ -48,7 +48,6 @@ class MenuPage(BasePage):
         processed_categories = set()
         errors_found = False
 
-        # Store accessibility already verified in navigate_to_store
         initial_categories = [
             cat.text for cat in self.get_elements(MenuCategories.VISIBLE_SUBCATEGORIES)
             if cat.is_displayed()
@@ -81,12 +80,12 @@ class MenuPage(BasePage):
                     self.logger.error(f"Error checking {error_item}: {str(e)}")
             return True
 
-        def explore_category(main_category_name, depth=0, path=""):
+        def explore_category(main_category_name, depth=0, new_path=""):
             if main_category_name in processed_categories:
                 self.logger.info(f"Already checked {main_category_name}, skipping...")
                 return
 
-            current_path = f"{path} > {main_category_name}" if path else main_category_name
+            current_path = f"{new_path} > {main_category_name}" if new_path else main_category_name
             self.logger.info(f"\nExploring depth {depth}: {current_path}")
 
             try:

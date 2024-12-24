@@ -41,5 +41,5 @@ class CartPage(BasePage):
         time.sleep(0.5)
         self.click(ModifierLocators.CART_BUTTON)
 
-    def pay_now(self):
+    def click_pay_now_button(self):
         self.click(ModifierLocators.PAY_NOW_BUTTON)
