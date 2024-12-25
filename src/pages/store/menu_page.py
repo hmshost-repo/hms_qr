@@ -15,6 +15,7 @@ class MenuPage(BasePage):
     def __init__(self, driver):
         super().__init__(driver)
         self.logger = logging.getLogger(__name__)
+        self.store_id = None
 
     def select_random_item(self):
         main_categories = self.get_elements(MenuCategories.ALL_CATEGORIES)
@@ -43,10 +44,9 @@ class MenuPage(BasePage):
 
 
     def check_all_prices(self):
-        price_to_check = "86.86"
-        invalid_prices = {}
+        invalid_items = []
+        price_to_check = "11.49"
         processed_categories = set()
-        errors_found = False
 
         initial_categories = [
             cat.text for cat in self.get_elements(MenuCategories.VISIBLE_SUBCATEGORIES)
@@ -60,20 +60,21 @@ class MenuPage(BasePage):
                 return False
 
             self.logger.info(f"Found {len(new_items)} items in {category_path}")
-            for item in new_items:
+            for i in new_items:
                 new_item_name = None
                 try:
-                    new_item_name = item.text
-                    self.click(item)
+                    new_item_name = i.text
+                    self.click(i)
                     item_price = self.get_text(PriceLocators.INDIVIDUAL_PRICE)
                     self.logger.info(f"Checking {category_path} > {new_item_name}: {item_price}")
 
                     if item_price == price_to_check:
-                        nonlocal errors_found
-                        errors_found = True
-                        item_path = category_path.replace(" > ", "/")
-                        invalid_prices.setdefault(item_path, {})[new_item_name] = item_price
-                        self.logger.error(f"Invalid price found: {item_path} > {new_item_name}: {item_price}")
+                        invalid_items.append({
+                            'category': category_path,
+                            'name': new_item_name,
+                            'price': item_price
+                        })
+                        self.logger.error(f"Invalid price found: {category_path} > {new_item_name}: {item_price}")
                     self.driver.back()
                 except Exception as e:
                     error_item = new_item_name if new_item_name else "unknown item"
@@ -118,24 +119,21 @@ class MenuPage(BasePage):
         for category_name in initial_categories:
             explore_category(category_name)
 
-        if errors_found:
-            error_message = "\nInvalid prices found:\n"
-            for path, items in invalid_prices.items():
-                error_message += f"\nCategory: {path}"
-                for item_name, price in items.items():
-                    error_message += f"\n  - {item_name}: {price}"
-            raise AssertionError(error_message)
-
-        return invalid_prices
+        return invalid_items
 
     def navigate_to_store(self, store_id):
+        self.store_id = store_id
         url = f"{BASE_URL}/{store_id}"
         self.driver.get(url)
+
         try:
-            self.click(CommonLocators.CLOSE_POPUP_BUTTON)
-            self.click(CommonLocators.CLOSE_AD_BUTTON)
+            if self.is_element_displayed(CommonLocators.CLOSE_AD_BUTTON, timeout=3):
+                self.click(CommonLocators.CLOSE_AD_BUTTON)
+
+            if self.is_element_displayed(CommonLocators.CLOSE_POPUP_BUTTON, timeout=3):
+                self.click(CommonLocators.CLOSE_POPUP_BUTTON)
         except:
             pass
+        
         if not self.is_element_displayed(ModifierLocators.COPYRIGHT_LOGO, timeout=10):
-            self.logger.error(f"Store {store_id} page is not loading properly")
             pytest.skip(f"Store {store_id} is not accessible")

@@ -193,6 +193,4 @@ def driver(request):
 
 def pytest_collection_modifyitems(items):
     for item in items:
-        if item.get_closest_marker('skip'):
-            continue
         item.obj = handle_test_errors(item.obj)

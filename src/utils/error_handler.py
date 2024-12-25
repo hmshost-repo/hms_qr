@@ -1,29 +1,16 @@
+import functools
+from selenium.common.exceptions import WebDriverException
 import pytest
-from functools import wraps
-from selenium.common.exceptions import TimeoutException, NoSuchWindowException, WebDriverException
 
 def handle_test_errors(func):
-    @wraps(func)
+    @functools.wraps(func)
     def wrapper(*args, **kwargs):
-        max_retries = 3
-        for attempt in range(max_retries):
-            try:
-                return func(*args, **kwargs)
-            except IndexError as e:
-                if attempt < max_retries - 1:
-                    kwargs['driver'].refresh()
-                    continue
-                pytest.skip(f"No elements found after {max_retries} attempts: {str(e)}")
-            except (TimeoutException, NoSuchWindowException) as e:
-                if attempt < max_retries - 1:
-                    kwargs['driver'].refresh()
-                    continue
-                pytest.skip(f"Page error after {max_retries} attempts: {str(e)}")
-            except WebDriverException as e:
-                if attempt < max_retries - 1:
-                    kwargs['driver'].refresh()
-                    continue
-                pytest.skip(f"Browser error after {max_retries} attempts: {str(e)}")
-            except Exception as e:
-                pytest.skip(f"Unexpected error: {str(e)}")
+        try:
+            return func(*args, **kwargs)
+        except AssertionError:
+            raise  # Re-raise assertion errors
+        except WebDriverException as e:
+            pytest.skip(f"Selenium error occurred: {str(e)}")
+        except Exception as e:
+            pytest.skip(f"Unexpected error occurred: {str(e)}")
     return wrapper

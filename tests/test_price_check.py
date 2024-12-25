@@ -13,4 +13,9 @@ def test_check_prices_in_categories(driver, store_id):
     menu_page = MenuPage(driver)
     menu_page.navigate_to_store(store_id)
     invalid_items = menu_page.check_all_prices()
-    assert not invalid_items, f"Found items with price $86.86: {invalid_items}"
+    
+    if invalid_items:
+        error_message = f"\nStore {store_id}:\n"
+        for item in invalid_items:
+            error_message += f"- {item['category']} > {item['name']}: ${item['price']}\n"
+        assert not invalid_items, error_message

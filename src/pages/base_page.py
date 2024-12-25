@@ -127,15 +127,14 @@ class BasePage:
         return wait.until(EC.presence_of_all_elements_located(locator))
 
     def click(self, target: Union[WebElement, Tuple[str, str]], name=None):
-        logging.info(f"Attempting to move to and click element: {name if name else target}")
         try:
             if isinstance(target, tuple):
                 element = self.wait.until(EC.presence_of_element_located(target))
             else:
                 element = target
+                
             try:
                 element.click()
-                logging.info(f"Successfully clicked element using regular click: {name if name else target}")
                 return element
             except Exception as e:
                 logging.info(f"Regular click failed, trying alternative methods: {str(e)}")
@@ -197,3 +196,4 @@ class BasePage:
 
     def switch_to_default_content(self):
         self.driver.switch_to.default_content()
+
