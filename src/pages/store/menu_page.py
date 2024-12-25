@@ -9,6 +9,8 @@ from src.locators.store_locators import (
 import random
 import logging
 import pytest
+from datetime import datetime
+from pathlib import Path
 
 
 class MenuPage(BasePage):
@@ -16,6 +18,17 @@ class MenuPage(BasePage):
         super().__init__(driver)
         self.logger = logging.getLogger(__name__)
         self.store_id = None
+        self.screenshots_dir = Path("screenshots/invalid_prices")
+        self.screenshots_dir.mkdir(exist_ok=True)
+
+    def take_item_screenshot(self, store_id, item_name):
+        timestamp = datetime.now().strftime('%H_%M')
+        safe_store_id = store_id.replace('/', '_')
+        safe_item_name = "".join(c for c in item_name if c.isalnum() or c in (' ', '-', '_')).strip()
+        filename = f"{safe_store_id} {safe_item_name} - {timestamp}.png"
+        filepath = self.screenshots_dir / filename
+        self.driver.save_screenshot(str(filepath))
+        self.logger.info(f"Screenshot saved: {filepath}")
 
     def select_random_item(self):
         main_categories = self.get_elements(MenuCategories.ALL_CATEGORIES)
@@ -45,7 +58,7 @@ class MenuPage(BasePage):
 
     def check_all_prices(self):
         invalid_items = []
-        price_to_check = "11.49"
+        price_to_check = "86.86"
         processed_categories = set()
 
         initial_categories = [
@@ -69,12 +82,13 @@ class MenuPage(BasePage):
                     self.logger.info(f"Checking {category_path} > {new_item_name}: {item_price}")
 
                     if item_price == price_to_check:
+                        self.take_item_screenshot(self.store_id, new_item_name)
+                        
                         invalid_items.append({
                             'category': category_path,
                             'name': new_item_name,
                             'price': item_price
                         })
-                        self.logger.error(f"Invalid price found: {category_path} > {new_item_name}: {item_price}")
                     self.driver.back()
                 except Exception as e:
                     error_item = new_item_name if new_item_name else "unknown item"

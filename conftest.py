@@ -12,6 +12,7 @@ from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
 from src.utils.error_handler import handle_test_errors
+import logging
 
 
 SCREENSHOTS_DIR = Path("test_failures/screenshots")
@@ -62,8 +63,18 @@ TIMEOUTS = {
 
 
 def pytest_configure(config):
-    # Only show these categories of output
-    config.option.tb_style = "short"
+    # Configure pytest to show cleaner output
+    config.option.tb_style = "no"
+    
+    # Configure logging to suppress all logs except critical
+    logging.getLogger('root').setLevel(logging.ERROR)
+    logging.getLogger('selenium').setLevel(logging.ERROR)
+    logging.getLogger('urllib3').setLevel(logging.ERROR)
+    logging.getLogger('src.pages.base_page').setLevel(logging.CRITICAL)
+    logging.getLogger('src.pages.store.menu_page').setLevel(logging.CRITICAL)
+    
+    # Disable pytest logging capture
+    config.option.capture = "no"
 
 
 def pytest_addoption(parser):

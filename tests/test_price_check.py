@@ -18,4 +18,5 @@ def test_check_prices_in_categories(driver, store_id):
         error_message = f"\nStore {store_id}:\n"
         for item in invalid_items:
             error_message += f"- {item['category']} > {item['name']}: ${item['price']}\n"
-        assert not invalid_items, error_message
+        error_message += "\ncheck the screenshots => invalid_prices folder"
+        pytest.fail(error_message)
