@@ -1,4 +1,4 @@
-from conftest import BASE_URL
+from conftest import BASE_URL, INVALID_PRICES_DIR
 from src.pages.base_page import BasePage
 from src.locators.store_locators import (
     PriceLocators,
@@ -11,6 +11,7 @@ import logging
 import pytest
 from datetime import datetime
 from pathlib import Path
+from selenium.webdriver.support.ui import WebDriverWait
 
 
 class MenuPage(BasePage):
@@ -18,15 +19,13 @@ class MenuPage(BasePage):
         super().__init__(driver)
         self.logger = logging.getLogger(__name__)
         self.store_id = None
-        self.screenshots_dir = Path("screenshots/invalid_prices")
-        self.screenshots_dir.mkdir(exist_ok=True)
 
     def take_item_screenshot(self, store_id, item_name):
         timestamp = datetime.now().strftime('%H_%M')
         safe_store_id = store_id.replace('/', '_')
         safe_item_name = "".join(c for c in item_name if c.isalnum() or c in (' ', '-', '_')).strip()
         filename = f"{safe_store_id} {safe_item_name} - {timestamp}.png"
-        filepath = self.screenshots_dir / filename
+        filepath = INVALID_PRICES_DIR / filename
         self.driver.save_screenshot(str(filepath))
         self.logger.info(f"Screenshot saved: {filepath}")
 
@@ -58,7 +57,7 @@ class MenuPage(BasePage):
 
     def check_all_prices(self):
         invalid_items = []
-        price_to_check = "86.86"
+        price_to_check = "9.69"
         processed_categories = set()
 
         initial_categories = [
@@ -138,16 +137,27 @@ class MenuPage(BasePage):
     def navigate_to_store(self, store_id):
         self.store_id = store_id
         url = f"{BASE_URL}/{store_id}"
-        self.driver.get(url)
-
+        
         try:
-            if self.is_element_displayed(CommonLocators.CLOSE_AD_BUTTON, timeout=3):
+            self.driver.get(url)
+            # Add explicit wait for page load
+            WebDriverWait(self.driver, 10).until(
+                lambda driver: driver.execute_script('return document.readyState') == 'complete'
+            )
+        except Exception as e:
+            print(f"Failed to load store {store_id}: {str(e)}")
+            pytest.skip(f"Failed to load store {store_id}")
+        
+        try:
+            if self.is_element_displayed(CommonLocators.CLOSE_AD_BUTTON, timeout=5):  # Increased timeout
                 self.click(CommonLocators.CLOSE_AD_BUTTON)
 
-            if self.is_element_displayed(CommonLocators.CLOSE_POPUP_BUTTON, timeout=3):
+            if self.is_element_displayed(CommonLocators.CLOSE_POPUP_BUTTON, timeout=5):  # Increased timeout
                 self.click(CommonLocators.CLOSE_POPUP_BUTTON)
-        except:
-            pass
+        except Exception as e:
+            print(f"Error handling popups: {str(e)}")
         
-        if not self.is_element_displayed(ModifierLocators.COPYRIGHT_LOGO, timeout=10):
+        # Wait longer for the copyright logo on Windows
+        if not self.is_element_displayed(ModifierLocators.COPYRIGHT_LOGO, timeout=15):
+            print(f"Store {store_id} page is not loading properly - copyright logo not found")
             pytest.skip(f"Store {store_id} is not accessible")

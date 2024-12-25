@@ -15,8 +15,16 @@ from src.utils.error_handler import handle_test_errors
 import logging
 
 
-SCREENSHOTS_DIR = Path("test_failures/screenshots")
-SCREENSHOTS_DIR.mkdir(parents=True, exist_ok=True)
+SCREENSHOTS_DIR = Path("screenshots")
+INVALID_PRICES_DIR = SCREENSHOTS_DIR / "invalid_prices"
+
+def create_screenshot_dirs():
+    """Create screenshot directories if they don't exist"""
+    SCREENSHOTS_DIR.mkdir(exist_ok=True)
+    INVALID_PRICES_DIR.mkdir(exist_ok=True)
+
+# Create directories when module is loaded
+create_screenshot_dirs()
 
 BASE_URL = "https://qaquickpay.hmshost.com/Menu"
 
@@ -31,9 +39,11 @@ BROWSER_OPTIONS = {
             "--disable-infobars",
             "--disable-browser-side-navigation",
             "--disable-site-isolation-trials",
-            "--page-load-strategy=none",
+            "--page-load-strategy=normal",
             "--disable-extensions",
-            "--dns-prefetch-disable"
+            "--dns-prefetch-disable",
+            "--disable-web-security",
+            "--ignore-certificate-errors"
         ]
     },
     'firefox': {
@@ -75,6 +85,10 @@ def pytest_configure(config):
     
     # Disable pytest logging capture
     config.option.capture = "no"
+    
+    # Limit the number of parallel processes
+    if config.getoption('numprocesses', default=None):
+        config.option.numprocesses = 3  # Limit to 3 parallel processes
 
 
 def pytest_addoption(parser):
@@ -151,6 +165,8 @@ def pytest_runtest_makereport(item, call):
 
             # Create filename with test name, store ID, and timestamp
             filename = f"{item.name}{store_id}_{timestamp}.png"
+            
+            # Save regular test failure screenshots in main screenshots directory
             filepath = SCREENSHOTS_DIR / filename
 
             driver.save_screenshot(str(filepath))
@@ -164,17 +180,12 @@ def driver(request):
     browser = 'chrome'  # default browser
     driver = None
 
-    # Set browser based on markers
-    if request.node.get_closest_marker('firefox'):
-        browser = 'firefox'
-    elif request.node.get_closest_marker('edge'):
-        browser = 'edge'
-
     try:
         if browser == 'chrome':
             options = ChromeOptions()
             for option in BROWSER_OPTIONS['chrome']['default']:
                 options.add_argument(option)
+            options.add_experimental_option('excludeSwitches', ['enable-logging'])
             driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
 
         elif browser == 'firefox':
