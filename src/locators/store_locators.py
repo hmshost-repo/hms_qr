@@ -89,7 +89,7 @@ class PaymentPageLocators:
     POSTAL_CODE = (By.CSS_SELECTOR, "input#PostalCode")
     PAY_BUTTON = (By.CSS_SELECTOR, "button#btnPay")
     FRAME = (By.ID, "hpc--card-frame")
-    SUCCESS_MESSAGE = (By.CSS_SELECTOR, "div.SuccessMsg")
+    SUCCESS_MESSAGE = (By.CSS_SELECTOR, "p.p")
 
 
 

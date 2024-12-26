@@ -1,11 +1,8 @@
 import random
 import logging
 import time
-
 from src.pages.base_page import BasePage
 from src.locators.store_locators import ModifierLocators
-
-
 
 class CartPage(BasePage):
     def __init__(self, driver):

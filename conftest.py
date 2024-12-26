@@ -11,168 +11,61 @@ from webdriver_manager.microsoft import EdgeChromiumDriverManager
 from selenium.webdriver.chrome.service import Service as ChromeService
 from selenium.webdriver.firefox.service import Service as FirefoxService
 from selenium.webdriver.edge.service import Service as EdgeService
-from src.utils.error_handler import handle_test_errors
+from src.utils.constants import (
+    BROWSER_OPTIONS,
+    TIMEOUTS
+)
 import logging
 
 
-SCREENSHOTS_DIR = Path("screenshots")
-INVALID_PRICES_DIR = SCREENSHOTS_DIR / "invalid_prices"
-
-def create_screenshot_dirs():
-    """Create screenshot directories if they don't exist"""
-    SCREENSHOTS_DIR.mkdir(exist_ok=True)
-    INVALID_PRICES_DIR.mkdir(exist_ok=True)
-
-# Create directories when module is loaded
-create_screenshot_dirs()
-
-BASE_URL = "https://qaquickpay.hmshost.com/Menu"
-
-BROWSER_OPTIONS = {
-    'chrome': {
-        'default': [
-            "--start-maximized",
-            "--disable-notifications",
-            "--no-sandbox",
-            "--disable-dev-shm-usage",
-            "--disable-gpu",
-            "--disable-infobars",
-            "--disable-browser-side-navigation",
-            "--disable-site-isolation-trials",
-            "--page-load-strategy=normal",
-            "--disable-extensions",
-            "--dns-prefetch-disable",
-            "--disable-web-security",
-            "--ignore-certificate-errors"
-        ]
-    },
-    'firefox': {
-        'preferences': {
-            "browser.startup.homepage": "about:blank",
-            "startup.homepage_welcome_url": "about:blank",
-            "browser.download.folderList": 2,
-            "browser.download.manager.showWhenStarting": False
-        }
-    },
-    'edge': {
-        'default': [
-            "--start-maximized",
-            "--disable-notifications",
-            # "--headless=new",
-            "--disable-gpu",
-            "--no-sandbox"
-        ]
-    }
-}
-
-TIMEOUTS = {
-    'implicit': 0,
-    'explicit': 1,
-    'page_load': 3
-}
-
-
-def pytest_configure(config):
-    # Configure pytest to show cleaner output
-    config.option.tb_style = "no"
-    
-    # Configure logging to suppress all logs except critical
-    logging.getLogger('root').setLevel(logging.ERROR)
-    logging.getLogger('selenium').setLevel(logging.ERROR)
-    logging.getLogger('urllib3').setLevel(logging.ERROR)
-    logging.getLogger('src.pages.base_page').setLevel(logging.CRITICAL)
-    logging.getLogger('src.pages.store.menu_page').setLevel(logging.CRITICAL)
-    
-    # Disable pytest logging capture
-    config.option.capture = "no"
-    
-    # Limit the number of parallel processes
-    if config.getoption('numprocesses', default=None):
-        config.option.numprocesses = 3  # Limit to 3 parallel processes
-
-
-def pytest_addoption(parser):
-    parser.addoption("--id", action="store", help="store id in format XXX/XXX")
-
-
-@pytest.fixture(scope="session")
-def store_id(request):
-    return request.config.getoption("--id")
-
-
-# @pytest.fixture
-# def driver(request):
-#     browser = 'chrome'  # default browser setting
-#     driver = None
+# def pytest_configure(config):
+#     config.option.tb_style = "no"
 #
-#     # Only change browser if specific marker is present
-#     if request.node.get_closest_marker('firefox'):
-#         browser = 'firefox'
-#     elif request.node.get_closest_marker('edge'):
-#         browser = 'edge'
-#     elif request.node.get_closest_marker('all_browsers'):
-#         # For all_browsers, Chrome will be used by default
-#         pass
+#     logging.getLogger('root').setLevel(logging.ERROR)
+#     logging.getLogger('selenium').setLevel(logging.ERROR)
+#     logging.getLogger('urllib3').setLevel(logging.ERROR)
+#     logging.getLogger('src.pages.base_page').setLevel(logging.CRITICAL)
+#     logging.getLogger('src.pages.store.menu_page').setLevel(logging.CRITICAL)
 #
-#     try:
-#         if browser == 'chrome':
-#             options = ChromeOptions()
-#             for option in BROWSER_OPTIONS['chrome']['default']:
-#                 options.add_argument(option)
-#             driver = webdriver.Chrome(service=ChromeService(ChromeDriverManager().install()), options=options)
+#     config.option.capture = "no"
 #
-#         elif browser == 'firefox':
-#             options = FirefoxOptions()
-#             for pref, value in BROWSER_OPTIONS['firefox']['preferences'].items():
-#                 options.set_preference(pref, value)
-#             driver = webdriver.Firefox(service=FirefoxService(GeckoDriverManager().install()), options=options)
-#             driver.maximize_window()
+#     if config.getoption('numprocesses', default=None):
+#         config.option.numprocesses = 3  # Limit to 3 parallel processes
 #
-#         elif browser == 'edge':
-#             options = EdgeOptions()
-#             for option in BROWSER_OPTIONS['edge']['default']:
-#                 options.add_argument(option)
-#             driver = webdriver.Edge(service=EdgeService(EdgeChromiumDriverManager().install()), options=options)
 #
-#         if driver:
-#             driver.implicitly_wait(TIMEOUTS['implicit'])
-#             driver.set_page_load_timeout(TIMEOUTS['page_load'])
-#             yield driver
-#             driver.quit()
+# def pytest_addoption(parser):
+#     parser.addoption("--id", action="store", help="store id in format XXX/XXX")
 #
-#     except Exception as e:
-#         if driver:
-#             driver.quit()
-#         raise
-
-
-@pytest.hookimpl(tryfirst=True, hookwrapper=True)
-def pytest_runtest_makereport(item, call):
-    outcome = yield
-    report = outcome.get_result()
-
-    if report.when == "call" and report.failed:
-        try:
-            driver = item.funcargs['driver']
-            timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-
-            # Get store_id if available
-            store_id = ''
-            if hasattr(item, 'callspec'):
-                params = item.callspec.params
-                if 'store_id' in params:
-                    store_id = f"_{str(params['store_id']).replace('/', '_')}"
-
-            # Create filename with test name, store ID, and timestamp
-            filename = f"{item.name}{store_id}_{timestamp}.png"
-            
-            # Save regular test failure screenshots in main screenshots directory
-            filepath = SCREENSHOTS_DIR / filename
-
-            driver.save_screenshot(str(filepath))
-            print(f"\nScreenshot saved: {filepath}")
-        except Exception as e:
-            print(f"\nFailed to capture screenshot: {str(e)}")
+#
+# @pytest.fixture(scope="session")
+# def store_id(request):
+#     return request.config.getoption("--id")
+#
+#
+# @pytest.hookimpl(tryfirst=True, hookwrapper=True)
+# def pytest_runtest_makereport(item, call):
+#     outcome = yield
+#     report = outcome.get_result()
+#
+#     if report.when == "call" and report.failed:
+#         try:
+#             driver = item.funcargs['driver']
+#             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+#
+#             store_id = ''
+#             if hasattr(item, 'callspec'):
+#                 params = item.callspec.params
+#                 if 'store_id' in params:
+#                     store_id = f"_{str(params['store_id']).replace('/', '_')}"
+#
+#             filename = f"{item.name}{store_id}_{timestamp}.png"
+#
+#             filepath = SCREENSHOTS_DIR / filename
+#
+#             driver.save_screenshot(str(filepath))
+#             print(f"\nScreenshot saved: {filepath}")
+#         except Exception as e:
+#             print(f"\nFailed to capture screenshot: {str(e)}")
 
 
 @pytest.fixture
@@ -207,12 +100,9 @@ def driver(request):
             yield driver
             driver.quit()
 
-    except Exception as e:
+    except Exception:
         if driver:
             driver.quit()
         raise
 
 
-def pytest_collection_modifyitems(items):
-    for item in items:
-        item.obj = handle_test_errors(item.obj)

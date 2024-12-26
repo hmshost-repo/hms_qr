@@ -1,3 +1,4 @@
+from datetime import datetime
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.action_chains import ActionChains
@@ -8,14 +9,38 @@ from selenium.webdriver.remote.webelement import WebElement
 from typing import Union, List, Tuple
 
 
-logging.basicConfig(level=logging.INFO)
-
 
 class BasePage:
     def __init__(self, driver):
         self.driver = driver
         self.wait = WebDriverWait(self.driver, 10)
         self.actions = ActionChains(self.driver)
+        self.logger = logging.getLogger(__name__)
+        self.store_id = None
+
+    def take_screenshot(self, store_id, item_name, sub_folder=None):
+
+        try:
+            from src.utils.constants import SCREENSHOTS_DIR
+            
+            timestamp = datetime.now().strftime('%H:%M')
+            safe_store_id = store_id.replace('/', '_')
+            safe_item_name = "".join(c for c in item_name if c.isalnum() or c in (' ', '-', '_')).strip()
+            
+            filename = f"{safe_store_id}_{safe_item_name}_{timestamp}.png"
+
+            if sub_folder:
+                directory = SCREENSHOTS_DIR / sub_folder
+                directory.mkdir(exist_ok=True)
+            else:
+                directory = SCREENSHOTS_DIR
+                
+            filepath = directory / filename
+            self.driver.save_screenshot(str(filepath))
+            print(f"\nScreenshot saved: {filepath}")
+            
+        except Exception as e:
+            print(f"Failed to take screenshot: {str(e)}")
 
 
     def send_keys(self, locator, text, clear=True, name=None):
@@ -160,9 +185,14 @@ class BasePage:
             logging.error(f"Failed to interact with element {name if name else target}: {str(e)}")
             raise
 
-    def wait_for_element_visible(self, locator: Tuple[str, str], timeout: int = None) -> WebElement:
-
-        wait = WebDriverWait(self.driver, timeout)
+    def wait_for_element_visible(self, locator: Tuple[str, str], timeout: int = 10) -> WebElement:
+        """
+        Wait for element to be visible
+        :param locator: Element locator tuple (By.XX, 'value')
+        :param timeout: Time to wait in seconds (default 10)
+        :return: WebElement once it's visible or TimeoutException if not found within timeout
+        """
+        wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5)  # polls every 0.5 seconds
         return wait.until(
             EC.visibility_of_element_located(locator)
         )

@@ -1,59 +1,16 @@
-from conftest import BASE_URL, INVALID_PRICES_DIR
 from src.pages.base_page import BasePage
 from src.locators.store_locators import (
     PriceLocators,
     MenuCategories,
-    ModifierLocators,
-    CommonLocators
+    ModifierLocators
 )
+from src.utils.navigation import Navigation
 import random
-import logging
-import pytest
-from datetime import datetime
-from pathlib import Path
-from selenium.webdriver.support.ui import WebDriverWait
 
 
 class MenuPage(BasePage):
-    def __init__(self, driver):
-        super().__init__(driver)
-        self.logger = logging.getLogger(__name__)
-        self.store_id = None
-
-    def take_item_screenshot(self, store_id, item_name):
-        timestamp = datetime.now().strftime('%H_%M')
-        safe_store_id = store_id.replace('/', '_')
-        safe_item_name = "".join(c for c in item_name if c.isalnum() or c in (' ', '-', '_')).strip()
-        filename = f"{safe_store_id} {safe_item_name} - {timestamp}.png"
-        filepath = INVALID_PRICES_DIR / filename
-        self.driver.save_screenshot(str(filepath))
-        self.logger.info(f"Screenshot saved: {filepath}")
-
-    def select_random_item(self):
-        main_categories = self.get_elements(MenuCategories.ALL_CATEGORIES)
-        random_category = random.choice(main_categories)
-        self.click(random_category)
-        while True:
-            try:
-                clickable_elements = self.get_elements(
-                    MenuCategories.ALL_SUB_CATEGORIES,
-                    MenuCategories.ALTERNATIVE_CATEGORIES
-                )
-                if not clickable_elements:
-                    clickable_elements = self.get_elements(ModifierLocators.MENU_ITEMS)
-
-                if clickable_elements:
-                    random_element = random.choice(clickable_elements)
-                    self.click(random_element)
-                else:
-                    self.driver.back()
-                if self.is_element_displayed(ModifierLocators.ADD_TO_CART):
-                    return True
-            except Exception as e:
-                self.logger.error(f"Error during navigation: {str(e)}")
-                self.driver.back()
-                continue
-
+    def navigate_to_store(self, store_id):
+        self.store_id = Navigation.navigate_to_store(self.driver, store_id)
 
     def check_all_prices(self):
         invalid_items = []
@@ -81,7 +38,7 @@ class MenuPage(BasePage):
                     self.logger.info(f"Checking {category_path} > {new_item_name}: {item_price}")
 
                     if item_price == price_to_check:
-                        self.take_item_screenshot(self.store_id, new_item_name)
+                        self.take_screenshot(self.store_id, new_item_name, sub_folder="invalid_price")
                         
                         invalid_items.append({
                             'category': category_path,
@@ -134,30 +91,27 @@ class MenuPage(BasePage):
 
         return invalid_items
 
-    def navigate_to_store(self, store_id):
-        self.store_id = store_id
-        url = f"{BASE_URL}/{store_id}"
-        
-        try:
-            self.driver.get(url)
-            # Add explicit wait for page load
-            WebDriverWait(self.driver, 10).until(
-                lambda driver: driver.execute_script('return document.readyState') == 'complete'
-            )
-        except Exception as e:
-            print(f"Failed to load store {store_id}: {str(e)}")
-            pytest.skip(f"Failed to load store {store_id}")
-        
-        try:
-            if self.is_element_displayed(CommonLocators.CLOSE_AD_BUTTON, timeout=5):  # Increased timeout
-                self.click(CommonLocators.CLOSE_AD_BUTTON)
+    def select_random_item(self):
+        main_categories = self.get_elements(MenuCategories.ALL_CATEGORIES)
+        random_category = random.choice(main_categories)
+        self.click(random_category)
+        while True:
+            try:
+                clickable_elements = self.get_elements(
+                    MenuCategories.ALL_SUB_CATEGORIES,
+                    MenuCategories.ALTERNATIVE_CATEGORIES
+                )
+                if not clickable_elements:
+                    clickable_elements = self.get_elements(ModifierLocators.MENU_ITEMS)
 
-            if self.is_element_displayed(CommonLocators.CLOSE_POPUP_BUTTON, timeout=5):  # Increased timeout
-                self.click(CommonLocators.CLOSE_POPUP_BUTTON)
-        except Exception as e:
-            print(f"Error handling popups: {str(e)}")
-        
-        # Wait longer for the copyright logo on Windows
-        if not self.is_element_displayed(ModifierLocators.COPYRIGHT_LOGO, timeout=15):
-            print(f"Store {store_id} page is not loading properly - copyright logo not found")
-            pytest.skip(f"Store {store_id} is not accessible")
+                if clickable_elements:
+                    random_element = random.choice(clickable_elements)
+                    self.click(random_element)
+                else:
+                    self.driver.back()
+                if self.is_element_displayed(ModifierLocators.ADD_TO_CART):
+                    return True
+            except Exception as e:
+                self.logger.error(f"Error during navigation: {str(e)}")
+                self.driver.back()
+                continue
