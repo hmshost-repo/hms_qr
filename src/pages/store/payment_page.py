@@ -3,6 +3,9 @@ import time
 from src.pages.base_page import BasePage
 from src.utils.credit_card import TEST_CARD
 from src.locators.store_locators import PaymentPageLocators
+from selenium.common.exceptions import TimeoutException
+from selenium.webdriver.support.ui import WebDriverWait
+from src.utils.constants import TIMEOUTS
 
 class CheckoutPage(BasePage):
     def __init__(self, driver):
@@ -20,8 +23,19 @@ class CheckoutPage(BasePage):
             self.send_keys(PaymentPageLocators.POSTAL_CODE, card_data['zip'])
             self.switch_to_default_content()
             self.click(PaymentPageLocators.PAY_BUTTON)
-            self.wait_for_element_visible(PaymentPageLocators.SUCCESS_MESSAGE, timeout=30)
+            
+            print("\nWaiting for receipt page...")
+            # Wait for URL to change to receipt page using payment timeout
+            WebDriverWait(self.driver, TIMEOUTS['payment']).until(
+                lambda driver: "Order/Receipt" in driver.current_url
+            )
+            
+            print("Receipt page loaded, getting confirmation...")
+            element = self.wait_for_element_visible(PaymentPageLocators.SUCCESS_MESSAGE, timeout=TIMEOUTS['explicit'])
+            print(f"Found confirmation element: {element.text}")
+            
             confirmation = self.get_text(PaymentPageLocators.SUCCESS_MESSAGE)
+            print(f"Confirmation text: {confirmation}")
             
             if not "Thanks" in confirmation:
                 if not self.store_id and 'store_id' in self.driver.current_url:

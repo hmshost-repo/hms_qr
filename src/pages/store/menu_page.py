@@ -93,6 +93,13 @@ class MenuPage(BasePage):
 
     def select_random_item(self):
         main_categories = self.get_elements(MenuCategories.ALL_CATEGORIES)
+        if not main_categories:
+            print("No categories found, retrying...")
+            self.driver.refresh()
+            main_categories = self.get_elements(MenuCategories.ALL_CATEGORIES)
+            if not main_categories:
+                raise Exception("No menu categories found after retry")
+            
         random_category = random.choice(main_categories)
         self.click(random_category)
         while True:

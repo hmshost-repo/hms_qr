@@ -97,6 +97,7 @@ def driver(request):
         if driver:
             driver.implicitly_wait(TIMEOUTS['implicit'])
             driver.set_page_load_timeout(TIMEOUTS['page_load'])
+            driver.set_script_timeout(TIMEOUTS['page_load'])
             yield driver
             driver.quit()
 

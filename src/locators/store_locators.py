@@ -90,6 +90,7 @@ class PaymentPageLocators:
     PAY_BUTTON = (By.CSS_SELECTOR, "button#btnPay")
     FRAME = (By.ID, "hpc--card-frame")
     SUCCESS_MESSAGE = (By.CSS_SELECTOR, "p.p")
+    PROCESSING_MESSAGE = (By.XPATH, "//div[contains(text(), 'Processing')]")
 
 
 
