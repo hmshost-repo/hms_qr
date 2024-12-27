@@ -7,6 +7,7 @@ from selenium.common.exceptions import TimeoutException
 import logging
 from selenium.webdriver.remote.webelement import WebElement
 from typing import Union, List, Tuple
+import os
 
 
 
@@ -19,25 +20,41 @@ class BasePage:
         self.store_id = None
 
     def take_screenshot(self, store_id, item_name, sub_folder=None):
-
+        """
+        Take a screenshot and save it in screenshots directory
+        :param store_id: Store ID (e.g., '120/230')
+        :param item_name: Name of the item (e.g., 'burger')
+        :param sub_folder: Optional subfolder under screenshots directory
+        """
         try:
             from src.utils.constants import SCREENSHOTS_DIR
             
-            timestamp = datetime.now().strftime('%H:%M')
-            safe_store_id = store_id.replace('/', '_')
-            safe_item_name = "".join(c for c in item_name if c.isalnum() or c in (' ', '-', '_')).strip()
+            # Ensure proper timestamp format
+            timestamp = datetime.now().strftime('%H_%M')  # Using underscore instead of colon for Windows compatibility
             
+            # Clean the store_id and item_name
+            safe_store_id = str(store_id).replace('/', '_').replace('\\', '_')
+            safe_item_name = "".join(c for c in str(item_name) if c.isalnum() or c in (' ', '-', '_')).strip()
+            
+            # Create filename with explicit extension
             filename = f"{safe_store_id}_{safe_item_name}_{timestamp}.png"
-
+            
+            # Create directory path using os.path
             if sub_folder:
-                directory = SCREENSHOTS_DIR / sub_folder
-                directory.mkdir(exist_ok=True)
+                directory = os.path.join(SCREENSHOTS_DIR, sub_folder)
+                os.makedirs(directory, exist_ok=True)
             else:
                 directory = SCREENSHOTS_DIR
                 
-            filepath = directory / filename
-            self.driver.save_screenshot(str(filepath))
-            print(f"\nScreenshot saved: {filepath}")
+            # Create full filepath using os.path.join
+            filepath = os.path.join(directory, filename)
+            
+            # Ensure the path is absolute
+            abs_filepath = os.path.abspath(filepath)
+            
+            # Take the screenshot
+            self.driver.save_screenshot(abs_filepath)
+            print(f"\nScreenshot saved: {abs_filepath}")
             
         except Exception as e:
             print(f"Failed to take screenshot: {str(e)}")
