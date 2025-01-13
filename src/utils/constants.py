@@ -53,4 +53,3 @@ TIMEOUTS = {
     'payment': 60
 }
 
-# ... rest of the constants ... 

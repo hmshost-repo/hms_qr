@@ -20,39 +20,27 @@ class BasePage:
         self.store_id = None
 
     def take_screenshot(self, store_id, item_name, sub_folder=None):
-        """
-        Take a screenshot and save it in screenshots directory
-        :param store_id: Store ID (e.g., '120/230')
-        :param item_name: Name of the item (e.g., 'burger')
-        :param sub_folder: Optional subfolder under screenshots directory
-        """
+
         try:
             from src.utils.constants import SCREENSHOTS_DIR
-            
-            # Ensure proper timestamp format
-            timestamp = datetime.now().strftime('%H_%M')  # Using underscore instead of colon for Windows compatibility
-            
-            # Clean the store_id and item_name
+
+            timestamp = datetime.now().strftime('%H_%M')
+
             safe_store_id = str(store_id).replace('/', '_').replace('\\', '_')
             safe_item_name = "".join(c for c in str(item_name) if c.isalnum() or c in (' ', '-', '_')).strip()
-            
-            # Create filename with explicit extension
+
             filename = f"{safe_store_id}_{safe_item_name}_{timestamp}.png"
-            
-            # Create directory path using os.path
+
             if sub_folder:
                 directory = os.path.join(SCREENSHOTS_DIR, sub_folder)
                 os.makedirs(directory, exist_ok=True)
             else:
                 directory = SCREENSHOTS_DIR
-                
-            # Create full filepath using os.path.join
+
             filepath = os.path.join(directory, filename)
-            
-            # Ensure the path is absolute
+
             abs_filepath = os.path.abspath(filepath)
-            
-            # Take the screenshot
+
             self.driver.save_screenshot(abs_filepath)
             print(f"\nScreenshot saved: {abs_filepath}")
             
@@ -116,7 +104,7 @@ class BasePage:
                 text = element.get_attribute('textContent')
                 if text:
                     logging.info(f"Successfully got text using textContent: {text}")
-                    return text.strip()
+                    return text
             except Exception as e:
                 logging.info(f"textContent failed: {str(e)}")
 
@@ -203,13 +191,8 @@ class BasePage:
             raise
 
     def wait_for_element_visible(self, locator: Tuple[str, str], timeout: int = 10) -> WebElement:
-        """
-        Wait for element to be visible
-        :param locator: Element locator tuple (By.XX, 'value')
-        :param timeout: Time to wait in seconds (default 10)
-        :return: WebElement once it's visible or TimeoutException if not found within timeout
-        """
-        wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5)  # polls every 0.5 seconds
+
+        wait = WebDriverWait(self.driver, timeout, poll_frequency=0.5)
         return wait.until(
             EC.visibility_of_element_located(locator)
         )

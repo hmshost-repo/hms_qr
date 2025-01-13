@@ -28,8 +28,7 @@ class Navigation:
                 driver.find_element(*CommonLocators.CLOSE_POPUP_BUTTON).click()
         except Exception as e:
             print(f"Error handling popups: {str(e)}")
-        
-        # Verify store loaded
+
         if not base.is_element_displayed(ModifierLocators.COPYRIGHT_LOGO, timeout=15):
             print(f"Store {store_id} page is not loading properly - copyright logo not found")
             pytest.skip(f"Store {store_id} is not accessible")

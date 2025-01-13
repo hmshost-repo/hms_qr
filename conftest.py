@@ -1,5 +1,3 @@
-from datetime import datetime
-from pathlib import Path
 import pytest
 from selenium import webdriver
 from selenium.webdriver.chrome.options import Options as ChromeOptions
@@ -15,62 +13,11 @@ from src.utils.constants import (
     BROWSER_OPTIONS,
     TIMEOUTS
 )
-import logging
 
 
-# def pytest_configure(config):
-#     config.option.tb_style = "no"
-#
-#     logging.getLogger('root').setLevel(logging.ERROR)
-#     logging.getLogger('selenium').setLevel(logging.ERROR)
-#     logging.getLogger('urllib3').setLevel(logging.ERROR)
-#     logging.getLogger('src.pages.base_page').setLevel(logging.CRITICAL)
-#     logging.getLogger('src.pages.store.menu_page').setLevel(logging.CRITICAL)
-#
-#     config.option.capture = "no"
-#
-#     if config.getoption('numprocesses', default=None):
-#         config.option.numprocesses = 3  # Limit to 3 parallel processes
-#
-#
-# def pytest_addoption(parser):
-#     parser.addoption("--id", action="store", help="store id in format XXX/XXX")
-#
-#
-# @pytest.fixture(scope="session")
-# def store_id(request):
-#     return request.config.getoption("--id")
-#
-#
-# @pytest.hookimpl(tryfirst=True, hookwrapper=True)
-# def pytest_runtest_makereport(item, call):
-#     outcome = yield
-#     report = outcome.get_result()
-#
-#     if report.when == "call" and report.failed:
-#         try:
-#             driver = item.funcargs['driver']
-#             timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-#
-#             store_id = ''
-#             if hasattr(item, 'callspec'):
-#                 params = item.callspec.params
-#                 if 'store_id' in params:
-#                     store_id = f"_{str(params['store_id']).replace('/', '_')}"
-#
-#             filename = f"{item.name}{store_id}_{timestamp}.png"
-#
-#             filepath = SCREENSHOTS_DIR / filename
-#
-#             driver.save_screenshot(str(filepath))
-#             print(f"\nScreenshot saved: {filepath}")
-#         except Exception as e:
-#             print(f"\nFailed to capture screenshot: {str(e)}")
-
-
-@pytest.fixture
+@pytest.fixture(scope="session")
 def driver(request):
-    browser = 'chrome'  # default browser
+    browser = 'chrome'
     driver = None
 
     try:

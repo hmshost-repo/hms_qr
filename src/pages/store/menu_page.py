@@ -14,7 +14,7 @@ class MenuPage(BasePage):
 
     def check_all_prices(self):
         invalid_items = []
-        price_to_check = "9.69"
+        price_to_check = "86.86"
         processed_categories = set()
 
         initial_categories = [

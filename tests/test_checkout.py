@@ -10,7 +10,7 @@ def get_all_store_ids():
     stores = read_store_data('src/data/stores.csv')
     return stores
 
-
+@pytest.mark.edge
 @pytest.mark.checkout
 @pytest.mark.parametrize('store_id', get_all_store_ids())
 def test_random_item_checkout(driver, store_id):
