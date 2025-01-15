@@ -1,5 +1,3 @@
-import time
-
 from src.pages.base_page import BasePage
 from src.utils.credit_card import TEST_CARD
 from src.locators.store_locators import PaymentPageLocators
@@ -9,7 +7,7 @@ from src.utils.constants import TIMEOUTS
 class CheckoutPage(BasePage):
     def __init__(self, driver):
         super().__init__(driver)
-        self.store_id = None  # Initialize store_id
+        self.store_id = None
 
     def place_the_order(self):
         try:
