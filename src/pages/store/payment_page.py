@@ -9,7 +9,6 @@ class CheckoutPage(BasePage):
         super().__init__(driver)
         self.store_id = None
 
-
     def place_the_order(self):
         try:
             card_data = TEST_CARD
