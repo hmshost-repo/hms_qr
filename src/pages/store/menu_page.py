@@ -7,6 +7,7 @@ from src.locators.store_locators import (
 from src.utils.navigation import Navigation
 import random
 
+price = "86.86"
 
 class MenuPage(BasePage):
     def navigate_to_store(self, store_id):
@@ -14,7 +15,7 @@ class MenuPage(BasePage):
 
     def check_all_prices(self):
         invalid_items = []
-        price_to_check = "86.86"
+        price_to_check = price
         processed_categories = set()
 
         initial_categories = [
